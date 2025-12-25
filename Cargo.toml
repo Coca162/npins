@@ -11,7 +11,7 @@ tokio = "^1.0"
 
 [workspace.package]
 version = "0.4.0"
-edition = "2021"
+edition = "2024"
 license = "EUPL-1.2"
 
 [package]
