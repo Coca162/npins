@@ -4,6 +4,9 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[lints.clippy]
+wildcard_imports = "warn"
+
 [dependencies]
 serde = { version = "^1.0", features = [ "derive" ] }
 serde_json.workspace = true
@@ -15,7 +18,7 @@ reqwest = { version = "^0.12.0", features = [ "rustls-tls-native-roots" ], defau
 async-trait = "0.1"
 lenient_semver_parser = { version = "0.4.2", default-features = false }
 lenient_version = { version = "0.4.2" }
-nix-compat = { git = "https://git.snix.dev/snix/snix", version = "0.1.0", features = ["serde"] }
+nix-compat = { git = "https://git.snix.dev/snix/snix", version = "0.1.0", features = ["serde"], default-features = false }
 
 [dev-dependencies]
 env_logger = { version = "^0.11.0", features = ["color", "auto-color", "regex"], default-features = false }
