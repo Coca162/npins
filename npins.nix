@@ -2,6 +2,7 @@
   lib,
   pkgs,
   rustPlatform,
+  installShellFiles,
   nix-gitignore,
   makeWrapper,
   runCommand,
@@ -22,6 +23,10 @@ let
     "^/libnpins/src$"
     "^/libnpins/src/.+$"
     "^/libnpins/Cargo.toml$"
+    "^/completions$"
+    "^/completions/src$"
+    "^/completions/src/.+$"
+    "^/completions/Cargo.toml$"
   ];
 
   extractSource =
@@ -49,6 +54,9 @@ let
     nix-prefetch-docker
     git
   ];
+
+  completions = "$out/bin/npins-completions";
+
   self = rustPlatform.buildRustPackage {
     pname = cargoToml.package.name;
     version = cargoToml.workspace.package.version;
@@ -63,13 +71,29 @@ let
     inherit src;
 
     buildInputs = lib.optional stdenv.isDarwin (with darwin.apple_sdk.frameworks; [ Security ]);
-    nativeBuildInputs = [ makeWrapper ];
+    nativeBuildInputs = [
+      makeWrapper
+      installShellFiles
+    ];
+
+    cargoBuildFlags = [
+      "-p"
+      "npins"
+      "-p"
+      "npins-completions"
+    ];
 
     # (Almost) all tests require internet
     doCheck = false;
 
     postFixup = ''
       wrapProgram $out/bin/npins --prefix PATH : "${runtimePath}"
+
+      installShellCompletion --cmd npins \
+        --bash <(${completions} bash) \
+        --zsh <(${completions} zsh) \
+        --fish <(${completions} fish) \
+        --nushell <(${completions} nushell)
     '';
 
     meta.tests = pkgs.callPackage ./test.nix { npins = self; };
