@@ -1,66 +1,30 @@
 //! The main CLI application
 
-use npins::*;
-
 use anyhow::{Context, Result};
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::Parser;
 use crossterm::{
+    QueueableCommand,
     cursor::MoveToPreviousLine,
     style::{Print, Stylize},
     terminal::{Clear, ClearType},
-    QueueableCommand,
 };
-use futures::{
-    future,
-    stream::{self, StreamExt},
+use futures_util::{
     TryStreamExt,
+    stream::{self, StreamExt},
 };
 use std::{
     cell::{Cell, RefCell},
     collections::{BTreeMap, BTreeSet},
-    io::{stderr, IsTerminal, Write},
-    path::PathBuf,
+    fs::File,
+    future,
+    io::{BufReader, IsTerminal, Write, stderr},
 };
-
 use url::{ParseError, Url};
 
-const DEFAULT_NIX: &'static str = include_str!("default.nix");
+use crate::opts::*;
+use libnpins::*;
 
-/// How to handle updates
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum UpdateStrategy {
-    /// Fetch latest version, update hashes if necessary
-    Normal,
-    /// Update hashes of the currently pinned version
-    HashesOnly,
-    /// Fetch latest version, always update hashes
-    Full,
-}
-
-impl UpdateStrategy {
-    /// Whether the latest version should be fetched
-    pub fn should_update(&self) -> bool {
-        match self {
-            UpdateStrategy::Normal => true,
-            UpdateStrategy::HashesOnly => false,
-            UpdateStrategy::Full => true,
-        }
-    }
-
-    /// Whether we want to force-update the hashes
-    pub fn must_fetch(&self) -> bool {
-        match self {
-            UpdateStrategy::Normal => false,
-            UpdateStrategy::HashesOnly => true,
-            UpdateStrategy::Full => true,
-        }
-    }
-}
-
-#[derive(Debug, Parser)]
-pub struct ChannelAddOpts {
-    channel_name: String,
-}
+mod opts;
 
 impl ChannelAddOpts {
     pub fn add(&self) -> Result<(Option<String>, Pin)> {
@@ -72,42 +36,6 @@ impl ChannelAddOpts {
             .into(),
         ))
     }
-}
-
-#[derive(Debug, Parser)]
-pub struct GenericGitAddOpts {
-    /// Track a branch instead of a release
-    #[arg(short, long)]
-    pub branch: Option<String>,
-
-    /// Use a specific commit/release instead of the latest.
-    /// This may be a tag name, or a git revision when --branch is set.
-    #[arg(long, value_name = "tag or rev")]
-    pub at: Option<String>,
-
-    /// Also track pre-releases.
-    /// Conflicts with the --branch option.
-    #[arg(long, conflicts_with = "branch")]
-    pub pre_releases: bool,
-
-    /// Bound the version resolution. For example, setting this to "2" will
-    /// restrict updates to 1.X versions. Conflicts with the --branch option.
-    #[arg(
-        long = "upper-bound",
-        value_name = "version",
-        conflicts_with_all = &["branch", "at"]
-    )]
-    pub version_upper_bound: Option<String>,
-
-    /// Optional prefix required for each release name / tag. For
-    /// example, setting this to "release/" will only consider those
-    /// that start with that string.
-    #[arg(long = "release-prefix")]
-    pub release_prefix: Option<String>,
-
-    /// Also fetch submodules
-    #[arg(long)]
-    pub submodules: bool,
 }
 
 impl GenericGitAddOpts {
@@ -139,15 +67,6 @@ impl GenericGitAddOpts {
     }
 }
 
-#[derive(Debug, Parser)]
-pub struct GitHubAddOpts {
-    pub owner: String,
-    pub repository: String,
-
-    #[command(flatten)]
-    pub more: GenericGitAddOpts,
-}
-
 impl GitHubAddOpts {
     pub fn add(&self) -> Result<(Option<String>, Pin)> {
         let repository = git::Repository::github(&self.owner, &self.repository);
@@ -156,15 +75,6 @@ impl GitHubAddOpts {
     }
 }
 
-#[derive(Debug, Parser)]
-pub struct ForgejoAddOpts {
-    pub server: String,
-    pub owner: String,
-    pub repository: String,
-
-    #[command(flatten)]
-    pub more: GenericGitAddOpts,
-}
 impl ForgejoAddOpts {
     pub fn add(&self) -> Result<(Option<String>, Pin)> {
         let server_url = Url::parse(&self.server).or_else(|err| match err {
@@ -177,31 +87,6 @@ impl ForgejoAddOpts {
 
         Ok((Some(self.repository.clone()), self.more.add(repository)?))
     }
-}
-
-#[derive(Debug, Parser)]
-pub struct GitLabAddOpts {
-    /// Usually just `"owner" "repository"`, but GitLab allows arbitrary folder-like structures.
-    #[arg(required = true)] // TODO set min number of values to 2 again
-    pub repo_path: Vec<String>,
-
-    #[arg(
-        long,
-        default_value = "https://gitlab.com/",
-        help = "Use a self-hosted GitLab instance instead",
-        value_name = "url"
-    )]
-    pub server: url::Url,
-
-    #[arg(
-        long,
-        help = "Use a private token to access the repository.",
-        value_name = "token"
-    )]
-    pub private_token: Option<String>,
-
-    #[command(flatten)]
-    pub more: GenericGitAddOpts,
 }
 
 impl GitLabAddOpts {
@@ -221,33 +106,6 @@ impl GitLabAddOpts {
     }
 }
 
-#[derive(Debug, Parser, Clone, Copy, Default, ValueEnum)]
-pub enum GitForgeOpts {
-    /// A generic git pin, with no further information
-    None,
-    #[default]
-    /// Try to determine the Forge from the given url, potentially by probing the server
-    Auto,
-    /// A Gitlab forge, e.g. gitlab.com
-    Gitlab,
-    /// A Github forge, i.e. github.com
-    Github,
-    /// A Forgejo forge, e.g. forgejo.org
-    Forgejo,
-}
-
-#[derive(Debug, Parser)]
-pub struct GitAddOpts {
-    /// The git remote URL. For example <https://github.com/andir/ate.git>
-    pub url: String,
-
-    #[arg(long, value_enum, default_value = "auto")]
-    pub forge: GitForgeOpts,
-
-    #[command(flatten)]
-    pub more: GenericGitAddOpts,
-}
-
 impl GitAddOpts {
     pub async fn add(&self) -> Result<(Option<String>, Pin)> {
         let url = Url::parse(&self.url)
@@ -265,11 +123,18 @@ impl GitAddOpts {
             .context("Failed to parse repository URL")?;
 
         if url.scheme().contains('.') {
-            log::warn!("Your URL scheme ('{}:') contains a '.', which is unusual. Please double-check its correctness.", url.scheme());
-            log::warn!("Very likely you forgot to specify the scheme, and the host name parsed as such instead.");
+            log::warn!(
+                "Your URL scheme ('{}:') contains a '.', which is unusual. Please double-check its correctness.",
+                url.scheme()
+            );
+            log::warn!(
+                "Very likely you forgot to specify the scheme, and the host name parsed as such instead."
+            );
         }
         let name = match url.path_segments().and_then(|mut x| x.next_back()) {
-            None => anyhow::bail!("Path of URL must start with a '/'. Also make sure that the URL starts with a scheme."),
+            None => anyhow::bail!(
+                "Path of URL must start with a '/'. Also make sure that the URL starts with a scheme."
+            ),
             Some(seg) => seg.to_owned(),
         };
         let name = name.strip_suffix(".git").unwrap_or(&name);
@@ -289,21 +154,6 @@ impl GitAddOpts {
     }
 }
 
-#[derive(Debug, Parser)]
-pub struct PyPiAddOpts {
-    /// Name of the package at PyPi.org
-    pub package_name: String,
-
-    /// Use a specific release instead of the latest.
-    #[arg(long, value_name = "version")]
-    pub at: Option<String>,
-
-    /// Bound the version resolution. For example, setting this to "2" will
-    /// restrict updates to 1.X versions. Conflicts with the --branch option.
-    #[arg(long = "upper-bound", value_name = "version", conflicts_with = "at")]
-    pub version_upper_bound: Option<String>,
-}
-
 impl PyPiAddOpts {
     pub fn add(&self) -> Result<(Option<String>, Pin)> {
         Ok((Some(self.package_name.clone()), {
@@ -319,12 +169,6 @@ impl PyPiAddOpts {
     }
 }
 
-#[derive(Debug, Parser)]
-pub struct ContainerAddOpts {
-    pub image_name: String,
-    pub image_tag: String,
-}
-
 impl ContainerAddOpts {
     pub fn add(&self) -> Result<(Option<String>, Pin)> {
         Ok((
@@ -338,64 +182,11 @@ impl ContainerAddOpts {
     }
 }
 
-#[derive(Debug, Parser)]
-pub struct TarballAddOpts {
-    /// Tarball URL
-    pub url: Url,
-}
-
 impl TarballAddOpts {
     pub fn add(&self) -> Result<(Option<String>, Pin)> {
         let url = self.url.clone();
         Ok((None, tarball::TarballPin { url }.into()))
     }
-}
-
-#[derive(Debug, Subcommand)]
-pub enum AddCommands {
-    /// Track a Nix channel
-    #[command(name = "channel")]
-    Channel(ChannelAddOpts),
-    /// Track a GitHub repository
-    #[command(name = "github")]
-    GitHub(GitHubAddOpts),
-    /// Track a Forgejo repository
-    #[command(name = "forgejo")]
-    Forgejo(ForgejoAddOpts),
-    /// Track a GitLab repository
-    #[command(name = "gitlab")]
-    GitLab(GitLabAddOpts),
-    /// Track a git repository
-    #[command(name = "git")]
-    Git(GitAddOpts),
-    /// Track a package on PyPi
-    #[command(name = "pypi")]
-    PyPi(PyPiAddOpts),
-    /// Track an OCI container
-    #[command(name = "container")]
-    Container(ContainerAddOpts),
-    /// Track a tarball
-    ///
-    /// This can be either a static URL that never changes its contents or a
-    /// URL which supports flakes "Lockable HTTP Tarball" API.
-    #[command(name = "tarball")]
-    Tarball(TarballAddOpts),
-}
-
-#[derive(Debug, Parser)]
-pub struct AddOpts {
-    /// Add the pin with a custom name.
-    /// If a pin with that name already exists, it will be overwritten
-    #[arg(long, global = true)]
-    pub name: Option<String>,
-    /// Add the pin as frozen, meaning that it will be ignored by `npins update` by default.
-    #[arg(long, global = true)]
-    pub frozen: bool,
-    /// Don't actually apply the changes
-    #[arg(short = 'n', long)]
-    pub dry_run: bool,
-    #[command(subcommand)]
-    command: AddCommands,
 }
 
 impl AddOpts {
@@ -428,156 +219,6 @@ impl AddOpts {
     }
 }
 
-#[derive(Debug, Parser)]
-pub struct RemoveOpts {
-    pub name: String,
-}
-
-#[derive(Debug, Parser)]
-pub struct UpdateOpts {
-    /// Updates only the specified pins.
-    pub names: Vec<String>,
-    /// Don't update versions, only re-fetch hashes
-    #[arg(short, long, conflicts_with = "full")]
-    pub partial: bool,
-    /// Re-fetch hashes even if the version hasn't changed.
-    /// Useful to make sure the derivations are in the Nix store.
-    #[arg(short, long, conflicts_with = "partial")]
-    pub full: bool,
-    /// Print the diff, but don't write back the changes
-    #[arg(short = 'n', long, global = true)]
-    pub dry_run: bool,
-    /// Allow updating frozen pins, which would otherwise be ignored
-    #[arg(long = "frozen")]
-    pub update_frozen: bool,
-    /// Maximum number of simultaneous downloads
-    #[structopt(default_value = "5", long)]
-    pub max_concurrent_downloads: usize,
-}
-
-#[derive(Debug, Parser)]
-pub struct VerifyOpts {
-    /// Verifies only the specified pins.
-    pub names: Vec<String>,
-    /// Maximum number of simultaneous downloads
-    #[structopt(default_value = "5", long)]
-    pub max_concurrent_downloads: usize,
-}
-
-#[derive(Debug, Parser)]
-pub struct InitOpts {
-    /// Don't add an initial `nixpkgs` entry
-    #[arg(long)]
-    pub bare: bool,
-}
-
-#[derive(Debug, Parser)]
-pub struct ImportOpts {
-    #[arg(default_value = "nix/sources.json")]
-    pub path: PathBuf,
-    /// Only import one entry from Niv
-    #[arg(short, long)]
-    pub name: Option<String>,
-}
-
-#[derive(Debug, Parser)]
-pub struct ImportFlakeOpts {
-    #[arg(default_value = "flake.lock")]
-    pub path: PathBuf,
-    /// Only import one entry from the flake
-    #[arg(short, long)]
-    pub name: Option<String>,
-}
-
-#[derive(Debug, Parser)]
-pub struct FreezeOpts {
-    /// Names of the pin(s)
-    #[structopt(required = true)]
-    pub names: Vec<String>,
-}
-
-#[derive(Debug, Parser)]
-pub struct GetPathOpts {
-    /// Name of the pin
-    #[structopt(required = true)]
-    pub name: String,
-}
-
-#[derive(Debug, Subcommand)]
-pub enum Command {
-    /// Intializes the npins directory. Running this multiple times will restore/upgrade the
-    /// `default.nix` and never touch your sources.json.
-    Init(InitOpts),
-
-    /// Adds a new pin entry.
-    // Boxing AddOpts as it is by far our largest structure, reduces
-    // memory requirements for smaller devices (even if maginal)
-    Add(Box<AddOpts>),
-
-    /// Lists the current pin entries.
-    Show,
-
-    /// Updates all or the given pins to the latest version.
-    Update(UpdateOpts),
-
-    /// Verifies that all or the given pins still have correct hashes. This is like `update --partial --dry-run` and then checking that the diff is empty
-    Verify(VerifyOpts),
-
-    /// Upgrade the sources.json and default.nix to the latest format version. This may occasionally break Nix evaluation!
-    Upgrade,
-
-    /// Removes one pin entry.
-    Remove(RemoveOpts),
-
-    /// Try to import entries from Niv
-    ImportNiv(ImportOpts),
-
-    /// Try to import entries from flake.lock
-    ImportFlake(ImportFlakeOpts),
-
-    /// Freeze a pin entry
-    Freeze(FreezeOpts),
-
-    /// Thaw a pin entry
-    Unfreeze(FreezeOpts),
-
-    /// Evaluates the store path to a pin, fetching it if necessary. Don't forget to add a GC root
-    GetPath(GetPathOpts),
-}
-
-#[derive(Debug, Parser)]
-#[command(
-    version,
-    about,
-    arg_required_else_help = true,
-    // Confirm clap defaults
-    propagate_version = false,
-    disable_colored_help = false,
-    color = clap::ColorChoice::Auto
-)]
-pub struct Opts {
-    /// Base folder for sources.json and the boilerplate default.nix
-    #[arg(
-        short = 'd',
-        long = "directory",
-        default_value = "npins",
-        env = "NPINS_DIRECTORY"
-    )]
-    folder: std::path::PathBuf,
-
-    /// Specifies the path to the sources.json and activates lockfile mode.
-    /// In lockfile mode, no default.nix will be generated and --directory will be ignored.
-    #[arg(long)]
-    lock_file: Option<std::path::PathBuf>,
-
-    /// Print debug messages.
-    #[arg(global = true, short = 'v', long = "verbose")]
-    pub verbose: bool,
-
-    #[command(subcommand)]
-    command: Command,
-}
-
 fn write_diff(writer: &mut impl Write, name: &str, diff: &[diff::DiffEntry]) {
     if diff.is_empty() {
         writeln!(writer, "[{name}] No Changes").unwrap();
@@ -596,7 +237,7 @@ impl Opts {
         } else {
             self.folder.join("sources.json")
         };
-        let fh = std::io::BufReader::new(std::fs::File::open(&path).with_context(move || {
+        let fh = BufReader::new(File::open(&path).with_context(move || {
             format!(
                 "Failed to open {}. You must initialize npins before you can show current pins.",
                 path.display()
@@ -615,7 +256,7 @@ impl Opts {
             }
             self.folder.join("sources.json")
         };
-        let mut fh = std::fs::File::create(&path)
+        let mut fh = File::create(&path)
             .with_context(move || format!("Failed to open {} for writing.", path.display()))?;
         serde_json::to_writer_pretty(&mut fh, &pins.to_value_versioned())?;
         fh.write_all(b"\n")?;
@@ -634,7 +275,7 @@ impl Opts {
             }
             log::info!("Writing default.nix");
             let p = self.folder.join("default.nix");
-            let mut fh = std::fs::File::create(&p).context("Failed to create npins default.nix")?;
+            let mut fh = File::create(&p).context("Failed to create npins default.nix")?;
             fh.write_all(default_nix.as_bytes())?;
         }
 
@@ -752,7 +393,7 @@ impl Opts {
         let length = if opts.names.is_empty() {
             pins.pins
                 .iter()
-                .filter(|(_, pin)| (opts.update_frozen || !pin.is_frozen()))
+                .filter(|(_, pin)| opts.update_frozen || !pin.is_frozen())
                 .count()
         } else {
             selected_pins.len()
@@ -778,7 +419,7 @@ impl Opts {
                     || (opts.names.is_empty() && (opts.update_frozen || !pin.is_frozen()))
             })
             .map(|(name, pin)| async move {
-                animation.on_pin_start(&*name);
+                animation.on_pin_start(name);
                 let diff = Self::update_one(pin, strategy).await?;
                 animation.on_pin_finish(&*name, |stderr| write_diff(stderr, name, &diff));
                 anyhow::Result::<_, anyhow::Error>::Ok((name, diff))
@@ -851,10 +492,10 @@ impl Opts {
             .iter_mut()
             .filter(|(name, _pin)| selected_pins.contains(name) || opts.names.is_empty())
             .map(|(name, pin)| async move {
-                animation.on_pin_start(&*name);
+                animation.on_pin_start(name);
                 let diff_result = Self::update_one(pin, STRATEGY).await;
                 animation.on_pin_finish(&*name, |stderr| match &diff_result {
-                    Ok(diff) => write_diff(stderr, name, &diff),
+                    Ok(diff) => write_diff(stderr, name, diff),
                     Err(err) => {
                         writeln!(stderr, "[{name}] Failed download").unwrap();
                         writeln!(stderr, "{err:?}").unwrap();
@@ -867,7 +508,7 @@ impl Opts {
             .buffer_unordered(opts.max_concurrent_downloads)
             /* Filter out empty diffs */
             .filter(|(_, diff_result)| {
-                futures::future::ready(
+                future::ready(
                     diff_result
                         .as_ref()
                         .map(|diff| !diff.is_empty())
@@ -895,14 +536,14 @@ impl Opts {
             log::info!("Verification passed.");
             Ok(())
         } else {
-            if differences.len() > 0 {
+            if !differences.is_empty() {
                 log::error!(
                     "The {} pins failed verification: {:?}",
                     differences.len(),
                     differences
                 );
             }
-            if failed.len() > 0 {
+            if !failed.is_empty() {
                 log::error!("The {} pins failed to download: {:?}", failed.len(), failed);
             }
             anyhow::bail!("Verification failed.")
@@ -931,7 +572,7 @@ impl Opts {
         log::info!("Upgrading lock file to the newest format version");
         let sources_json = self.folder.join("sources.json");
         let path = self.lock_file.as_ref().unwrap_or(&sources_json);
-        let fh = std::io::BufReader::new(std::fs::File::open(&path).with_context(move || {
+        let fh = BufReader::new(File::open(path).with_context(move || {
             format!(
                 "Failed to open {}. You must initialize npins first.",
                 path.display()
@@ -1007,12 +648,14 @@ impl Opts {
         let mut pins = self.read_pins()?;
 
         let niv: BTreeMap<String, serde_json::Value> =
-            serde_json::from_reader(std::fs::File::open(&o.path).context(anyhow::format_err!(
+            serde_json::from_reader(File::open(&o.path).context(anyhow::format_err!(
                 "Could not open sources.json at '{}'",
                 o.path.canonicalize().unwrap_or_else(|_| o.path.clone()).display()
             ))?)
             .context("Niv file is not a valid JSON dict")?;
-        log::info!("Note that all the imported entries will be updated so they won't necessarily point to the same commits as before!");
+        log::info!(
+            "Note that all the imported entries will be updated so they won't necessarily point to the same commits as before!"
+        );
 
         async fn import(
             name: &str,
@@ -1065,12 +708,14 @@ impl Opts {
         let mut pins = self.read_pins()?;
 
         let flake: serde_json::Value =
-            serde_json::from_reader(std::fs::File::open(&o.path).context(anyhow::format_err!(
+            serde_json::from_reader(File::open(&o.path).context(anyhow::format_err!(
                 "Could not open flake.lock at '{}'",
                 o.path.canonicalize().unwrap_or_else(|_| o.path.clone()).display()
             ))?)
             .context("Nix lock file is not a valid JSON object")?;
-        log::info!("Note that all the imported entries will be updated so they won't necessarily point to the same commits as before!");
+        log::info!(
+            "Note that all the imported entries will be updated so they won't necessarily point to the same commits as before!"
+        );
 
         let nodes: &serde_json::Map<String, serde_json::Value> = flake
             .get("nodes")
@@ -1181,7 +826,9 @@ impl Opts {
 
     pub async fn run(&self) -> Result<()> {
         if self.lock_file.is_some() && &*self.folder != std::path::Path::new("npins") {
-            anyhow::bail!("If --lock-file is set, --directory will be ignored and thus should not be set to a non-default value (which is \"npins\")");
+            anyhow::bail!(
+                "If --lock-file is set, --directory will be ignored and thus should not be set to a non-default value (which is \"npins\")"
+            );
         }
         match &self.command {
             Command::Init(o) => self.init(o).await?,
