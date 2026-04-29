@@ -28,7 +28,7 @@ pub async fn nix_prefetch_url(url: impl AsRef<str>, unpack: bool) -> Result<NixH
             .arg("sha256")
             .arg(url);
 
-        log::debug!("Executing: {}", format_command(&command)?);
+        log::debug!("Executing: {}", format_command(command.as_std())?);
 
         let output = command
             .output()
@@ -77,7 +77,7 @@ pub async fn nix_prefetch_git(
             .arg(url)
             .arg(git_ref.as_ref());
 
-        log::debug!("Executing: {}", format_command(&command)?);
+        log::debug!("Executing: {}", format_command(command.as_std())?);
 
         let output = command.output().await.with_context(|| {
             format!(
@@ -158,7 +158,7 @@ pub async fn nix_prefetch_docker(
         command.arg("--image-digest").arg(value);
     }
 
-    log::debug!("Executing: {}", format_command(&command)?);
+    log::debug!("Executing: {}", format_command(command.as_std())?);
 
     let output = command.output().await.with_context(|| {
         format!(
@@ -183,7 +183,7 @@ pub async fn nix_prefetch_docker(
     serde_json::from_slice(&output.stdout)
         .context("Failed to deserialize nix-pfetch-git JSON response.")
 }
-pub async fn nix_eval_pin(lockfile_path: &Path, pin: &str) -> Result<std::path::PathBuf> {
+pub fn nix_eval_pin(lockfile_path: &Path, pin: &str) -> Result<std::path::PathBuf> {
     let lockfile_path = lockfile_path.canonicalize()?;
     let lockfile_path = lockfile_path
         .to_str()
@@ -203,7 +203,7 @@ pub async fn nix_eval_pin(lockfile_path: &Path, pin: &str) -> Result<std::path::
     let nix_eval_code =
         format!("{{pin, path}}: (({DEFAULT_NIX}) {{ input = /. + path; }}).${{pin}}.outPath");
 
-    let mut command = tokio::process::Command::new("nix-instantiate");
+    let mut command = std::process::Command::new("nix-instantiate");
     command
         .arg("--show-trace")
         .arg("--eval")
@@ -224,7 +224,6 @@ pub async fn nix_eval_pin(lockfile_path: &Path, pin: &str) -> Result<std::path::
         .spawn()
         .context("Failed to spawn `nix-instantiate`")?
         .wait_with_output()
-        .await
         .context("Failed to spawn `nix-instantiate`")?;
 
     if !output.status.success() {

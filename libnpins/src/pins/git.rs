@@ -693,7 +693,7 @@ async fn fetch_remote(url: &str, args: &[&str]) -> Result<Vec<RemoteInfo>> {
             .arg("ls-remote")
             .args(args);
 
-        log::debug!("Executing: {}", format_command(&command)?);
+        log::debug!("Executing: {}", format_command(command.as_std())?);
 
         let process = command
             .output()

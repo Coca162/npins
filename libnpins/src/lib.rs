@@ -261,11 +261,7 @@ fn elide_to_first_line(input_string: &str) -> String {
 /// Formats a command in a shell-safe manner.
 ///
 /// NOTE: Multi-line components will be elided to their first line!
-pub(crate) fn format_command(tokio_cmd: &tokio::process::Command) -> anyhow::Result<String> {
-    // `tokio::process`'s `Command` doesn't allow introspecting, so let's ignore that
-    // and use it as a `std::process::Command`.
-    let cmd = tokio_cmd.as_std();
-
+pub(crate) fn format_command(cmd: &std::process::Command) -> anyhow::Result<String> {
     let mut command_parts: Vec<String> = Vec::new();
 
     // Format and escape environment
