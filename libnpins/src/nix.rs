@@ -117,7 +117,7 @@ pub async fn nix_prefetch_git(
             String::from_utf8_lossy(&output.stdout)
         );
         let info: NixPrefetchGitResponse = serde_json::from_slice(&output.stdout)
-            .context("Failed to deserialize nix-pfetch-git JSON response.")?;
+            .context("Failed to deserialize nix-prefetch-git JSON response.")?;
 
         NixHash::from_str(&info.sha256, Some(HashAlgo::Sha256))
             .with_context(|| format!("failed to parse {} as NixHash", &info.sha256))
@@ -186,7 +186,7 @@ pub async fn nix_prefetch_docker(
         String::from_utf8_lossy(&output.stdout)
     );
     serde_json::from_slice(&output.stdout)
-        .context("Failed to deserialize nix-pfetch-git JSON response.")
+        .context("Failed to deserialize nix-prefetch-git JSON response.")
 }
 pub async fn nix_eval_pin(lockfile_path: &Path, pin: &str) -> Result<std::path::PathBuf> {
     let lockfile_path = lockfile_path.canonicalize()?;

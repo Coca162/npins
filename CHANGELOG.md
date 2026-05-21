@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0
+
 - **[Breaking] Support for the "Lockable HTTP Tarball Protocol" has been removed.**
   Instead of checking some HTTP headers, the user must now explicitly specify `--mutable` when adding `tarball` pins.
   Existing locked tarball pins should remain functional just the same as before, no action required.
@@ -11,6 +13,8 @@
 - Added `--exclude` to `npins show` to invert the provided entries to exclude from the complete list (https://github.com/andir/npins/pull/203)
 - Basic completions for bash, fish and zsh are now included (https://github.com/andir/npins/pull/203)
 - Fish completions will complete pin names where applicable (https://github.com/andir/npins/pull/203)
+- `npins` will no longer spawn multiple threads for its runtime (https://github.com/andir/npins/pull/232)
+- `npins update` will now error if all the pins it tried to update were non-existent or frozen (https://github.com/andir/npins/pull/191)
 
 ## 0.4.1
 
