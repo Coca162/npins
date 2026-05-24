@@ -509,7 +509,8 @@ in
       npins --lock-file sources.json init --bare
       # Setting a custom directory should fail in lockfile mode
       ! npins --lock-file sources.json -d npins2 show
-      npins --lock-file sources.json -d npins show
+      ! npins --lock-file sources.json -d npins show
+      npins --lock-file sources.json show
       test -e npins/default.nix && exit 1
       V=$(jq -r .pins sources.json)
       [[ "$V" = "{}" ]]

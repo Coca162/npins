@@ -20,6 +20,7 @@ pub mod niv;
 pub mod nix;
 pub mod versions;
 
+/// The contents of the `default.nix` file we provide in npins directories
 pub const DEFAULT_NIX: &str = include_str!("default.nix");
 
 /// Helper method to build you a client.
