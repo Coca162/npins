@@ -221,7 +221,7 @@ The access token needs at least the `read_api` and `read_repository` scopes and 
 The `read_api` scope is not available for deploy tokens, hence they are not usable for npins.
 
 Specifying the token via environment variable means that npins will use the token for adding/updating the pin but not write it to sources.json.
-To update the repository in the future, the variable needs to be set again and nix needs to be configured accordingly to be able to fetch it (see the `netrc-file` option).
+To update the repository in the future, the variable needs to be set again and nix needs to be configured accordingly to be able to fetch it (see the [`netrc-file` option](https://nix.dev/manual/nix/2.24/command-ref/conf-file#conf-netrc-file)).
 Environment example:
 ```console
 $ GITLAB_TOKEN=H_BRqzV3NcaPvXcYs2Xf npins add gitlab my-org my-private-repo
