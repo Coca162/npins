@@ -107,7 +107,7 @@ let
         else if spec.type == "Channel" then
           mkChannelSource fetchers spec
         else if spec.type == "Url" || spec.type == "MutableUrl" then
-          mkUrlSource fetchers spec
+          mkUrlSource fetchers name spec
         else if spec.type == "Container" then
           mkContainerSource pkgs spec
         else
@@ -199,6 +199,7 @@ let
       fetchurl,
       ...
     }:
+    name:
     {
       url,
       hash,
@@ -206,7 +207,7 @@ let
       ...
     }:
     (if unpack then fetchTarball else fetchurl) {
-      inherit url;
+      inherit url name;
       sha256 = hash;
     };
 
