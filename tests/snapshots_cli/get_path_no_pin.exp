@@ -1,18 +1,2 @@
 $ npins get-path foo
-error:
-       … while calling anonymous lambda
-         at «string»:1:1:
-            1| {pin, path}: ((/*
-             | ^
-            2|   This file is provided under the MIT licence:
-
-       error: attribute 'foo' missing
-       at «string»:261:27:
-          260| )
-          261| ) { input = /. + path; }).${pin}.outPath
-             |                           ^
-Error: Could not evaluate pin
-
-Caused by:
-    Failed to eval pin: 'foo'
-    
+Error: Pin 'foo' does not exist.

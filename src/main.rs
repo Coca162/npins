@@ -924,7 +924,14 @@ impl Opts {
 
     async fn get_path(&self, o: &GetPathOpts) -> Result<()> {
         /* Although redundant, we still parse the lock file here for better error messages */
-        self.read_pins()?;
+        {
+            let pins = self.read_pins()?;
+            anyhow::ensure!(
+                pins.pins.contains_key(&o.name),
+                "Pin '{}' does not exist.",
+                o.name,
+            );
+        }
 
         let path = self
             .lock_file
