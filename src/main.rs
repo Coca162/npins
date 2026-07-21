@@ -760,7 +760,7 @@ impl Opts {
         Ok(())
     }
 
-    async fn import_niv(&self, o: &ImportOpts) -> Result<()> {
+    async fn import_niv(&self, o: &ImportNivOpts) -> Result<()> {
         let mut pins = self.read_pins()?;
 
         let niv: BTreeMap<String, serde_json::Value> =
@@ -788,7 +788,7 @@ impl Opts {
                 name
             );
 
-            let pin: niv::NivPin = serde_json::from_value(pin.clone())
+            let pin: import::NivPin = serde_json::from_value(pin.clone())
                 .context("Pin is either invalid, or we don't support it")?;
             let mut pin: Pin = pin
                 .try_into()
@@ -874,7 +874,7 @@ impl Opts {
                 name
             );
 
-            let pin: flake::FlakePin = serde_json::from_value(pin.clone())
+            let pin: import::FlakePin = serde_json::from_value(pin.clone())
                 .context("Pin is either invalid, or we don't support it")?;
 
             if pin.is_indirect() {

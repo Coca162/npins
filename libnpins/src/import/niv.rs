@@ -1,9 +1,8 @@
 //! Convert+Import Niv files
 
+use crate::{Pin, git};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
-
-use crate::{Pin, git};
 
 /// Pin entry from Niv's sources.json
 ///

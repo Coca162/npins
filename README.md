@@ -171,7 +171,7 @@ Arguments:
   [PATH]  [default: nix/sources.json]
 
 Options:
-  -n, --name <NAME>  Only import one entry from Niv
+  -n, --name <NAME>  Optionally import only one entry from Niv instead of all
   -v, --verbose      Print debug messages
   -h, --help         Print help
 ```
