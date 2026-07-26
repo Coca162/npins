@@ -1,0 +1,65 @@
+$ npins get-path broken
+error:
+       … while calling anonymous lambda
+         at «string»:1:1:
+            1| {pin, path}: ((/*
+             | ^
+            2|   This file is provided under the MIT licence:
+
+       … while evaluating the attribute 'broken.outPath'
+         at «string»:116:15:
+          115|     in
+          116|     spec // { outPath = mayOverride name path; };
+             |               ^
+          117|
+
+       … from call site
+         at «string»:116:25:
+          115|     in
+          116|     spec // { outPath = mayOverride name path; };
+             |                         ^
+          117|
+
+       … while calling 'mayOverride'
+         at «string»:37:11:
+           36|   mayOverride =
+           37|     name: path:
+             |           ^
+           38|     let
+
+       … while evaluating path
+         at «string»:44:7:
+           43|     if ersatz == "" then
+           44|       path
+             |       ^
+           45|     else
+
+       … from call site
+         at «string»:110:11:
+          109|         else if spec.type == "Url" || spec.type == "MutableUrl" then
+          110|           mkUrlSource fetchers spec
+             |           ^
+          111|         else if spec.type == "Container" then
+
+       … while calling 'mkUrlSource'
+         at «string»:202:5:
+          201|     }:
+          202|     {
+             |     ^
+          203|       url,
+
+       … while calling the 'fetchurl' builtin
+         at «string»:208:5:
+          207|     }:
+          208|     (if unpack then fetchTarball else fetchurl) {
+             |     ^
+          209|       inherit url;
+
+       error: hash mismatch in file downloaded from 'http://localhost/testTarball':
+         specified: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+         got:       sha256-tarballAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+Error: Could not evaluate pin
+
+Caused by:
+    Failed to eval pin: 'broken'
+    

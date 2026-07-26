@@ -1,0 +1,3 @@
+$ npins add git http://localhost/tagged-repo.git --branch test-branch --at v0.2
+[INFO ] No forge was auto-detected, treating as plain git repository
+Error: 'v0.2' is not a valid git revision (sha1 hash)

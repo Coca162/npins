@@ -1,0 +1,8 @@
+$ npins add git http://localhost/untagged-repo.git
+[INFO ] No forge was auto-detected, treating as plain git repository
+[INFO ] Adding 'untagged-repo' …
+Error: Failed to fully initialize the pin
+
+Caused by:
+    0: Updating untagged-repo
+    1: Repository has no matching release tags

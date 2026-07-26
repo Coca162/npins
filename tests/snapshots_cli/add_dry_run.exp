@@ -1,0 +1,10 @@
+$ npins add -n git http://localhost/untagged-repo.git -b foo
+[INFO ] No forge was auto-detected, treating as plain git repository
+[INFO ] Adding 'untagged-repo' …
+    repository: http://localhost/untagged-repo.git
+    branch: foo
+    submodules: false
+    revision: 81289a3c12d4f528d27794b9e47f4ff5cf534a88
+    hash: sha256-JHHZ7D/jihTqoI05i5WpAgXCrxnO6q8MF8sfxKx6ARs=
+    frozen: false
+

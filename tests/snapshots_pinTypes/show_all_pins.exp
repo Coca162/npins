@@ -1,0 +1,182 @@
+$ npins show
+channel-tarball: (mutable url)
+    update_url: https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.xz
+    unpack: true
+    url: https://releases.nixos.org/nixpkgs/nixpkgs-unstable-25.11pre123456.abcdef/nixexprs.tar.xz
+    hash: sha256-lRKytOtDgTaHQOmUJWGDiYA9KmcsEdQRD/EhOJECDn4=
+    frozen: false
+
+dependency: (git release tag)
+    repository: https://github.com/owner/dependency.git
+    pre_releases: false
+    submodules: false
+    version: v0.2
+    revision: 55af235fa333dbcceb6f9f8501e70123fdd5f316
+    hash: sha256-pcHLcrFh85GN1XSme4s4yESlqqx995vhVz8Y+pinhl0=
+    frozen: false
+
+forgejo-branch: (git repository)
+    repository: http://forgejo:3000/owner/dependency.git
+    branch: test-branch
+    submodules: false
+    revision: 55af235fa333dbcceb6f9f8501e70123fdd5f316
+    url: http://forgejo:3000/owner/dependency/archive/55af235fa333dbcceb6f9f8501e70123fdd5f316.tar.gz
+    hash: sha256-zvEbA7dwNhxxbJFSwfRFBSgsLJd5Jrq6gAqm+0+Qhn8=
+    frozen: false
+
+forgejo-main-1: (git repository)
+    repository: http://forgejo:3000/owner/main-repo.git
+    branch: main
+    submodules: true
+    revision: f20fbe30aa32da2f7dfcd12fec5295383781362f
+    hash: sha256-PRJMwhmZdK3bwnfgWM828y09CcvIf2tMKSCfuET8QLg=
+    frozen: false
+
+forgejo-main-2: (git repository)
+    repository: http://forgejo:3000/owner/main-repo.git
+    branch: main
+    submodules: false
+    revision: f20fbe30aa32da2f7dfcd12fec5295383781362f
+    url: http://forgejo:3000/owner/main-repo/archive/f20fbe30aa32da2f7dfcd12fec5295383781362f.tar.gz
+    hash: sha256-lAqwCjz+m7m5iWuXvbXmEiSF18Ww4YmhnspE1MnJW0A=
+    frozen: false
+
+forgejo-main-3: (git release tag)
+    repository: http://forgejo:3000/owner/main-repo.git
+    pre_releases: false
+    submodules: true
+    version: v0.5
+    revision: f20fbe30aa32da2f7dfcd12fec5295383781362f
+    hash: sha256-PRJMwhmZdK3bwnfgWM828y09CcvIf2tMKSCfuET8QLg=
+    frozen: false
+
+forgejo-main-4: (git release tag)
+    repository: http://forgejo:3000/owner/main-repo.git
+    pre_releases: false
+    submodules: false
+    version: v0.5
+    revision: f20fbe30aa32da2f7dfcd12fec5295383781362f
+    hash: sha256-lAqwCjz+m7m5iWuXvbXmEiSF18Ww4YmhnspE1MnJW0A=
+    frozen: false
+
+forgejo-release: (git release tag)
+    repository: http://forgejo:3000/owner/dependency.git
+    pre_releases: false
+    submodules: false
+    version: v0.2
+    revision: 55af235fa333dbcceb6f9f8501e70123fdd5f316
+    hash: sha256-zvEbA7dwNhxxbJFSwfRFBSgsLJd5Jrq6gAqm+0+Qhn8=
+    frozen: false
+
+generic-repo: (git repository)
+    repository: https://github.com/generic-org/generic-repo.git
+    branch: test-branch
+    submodules: false
+    revision: 55af235fa333dbcceb6f9f8501e70123fdd5f316
+    url: https://github.com/generic-org/generic-repo/archive/55af235fa333dbcceb6f9f8501e70123fdd5f316.tar.gz
+    hash: sha256-pcHLcrFh85GN1XSme4s4yESlqqx995vhVz8Y+pinhl0=
+    frozen: false
+
+main-repo-1: (git repository)
+    repository: https://github.com/owner/main-repo.git
+    branch: main
+    submodules: true
+    revision: d77e2922302bb87b6f608efedefaf9ff4fe6cf61
+    hash: sha256-phJWxfMm0PBOgFHwszSjV36JAvB4rqMYtO6m8HeG6S4=
+    frozen: false
+
+main-repo-2: (git repository)
+    repository: https://github.com/owner/main-repo.git
+    branch: main
+    submodules: false
+    revision: d77e2922302bb87b6f608efedefaf9ff4fe6cf61
+    url: https://github.com/owner/main-repo/archive/d77e2922302bb87b6f608efedefaf9ff4fe6cf61.tar.gz
+    hash: sha256-z8RpbkPx6UZQUIVY9xWBSx3c5ZergtJqPh7EWlkewCc=
+    frozen: false
+
+main-repo-3: (git release tag)
+    repository: https://github.com/owner/main-repo.git
+    pre_releases: false
+    submodules: true
+    version: v0.5
+    revision: d77e2922302bb87b6f608efedefaf9ff4fe6cf61
+    hash: sha256-phJWxfMm0PBOgFHwszSjV36JAvB4rqMYtO6m8HeG6S4=
+    frozen: false
+
+main-repo-4: (git release tag)
+    repository: https://github.com/owner/main-repo.git
+    pre_releases: false
+    submodules: false
+    version: v0.5
+    revision: d77e2922302bb87b6f608efedefaf9ff4fe6cf61
+    hash: sha256-z8RpbkPx6UZQUIVY9xWBSx3c5ZergtJqPh7EWlkewCc=
+    frozen: false
+
+nixpkgs-unstable: (Nix channel)
+    name: nixpkgs-unstable
+    artifact: nixexprs.tar.xz
+    url: https://releases.nixos.org/nixpkgs/nixpkgs-unstable-25.11pre123456.abcdef/nixexprs.tar.xz
+    hash: sha256-lRKytOtDgTaHQOmUJWGDiYA9KmcsEdQRD/EhOJECDn4=
+    frozen: false
+
+submoduled-repo: (git release tag)
+    repository: http://localhost/submoduled-repo.git
+    pre_releases: false
+    submodules: true
+    version: v0.5
+    revision: b5b7ede21d2d58a9c20f8519e1fcf77e9f6d23c0
+    hash: sha256-7O76f0tiQVW5RBCUrd9dc/yvQ/0c2FCcBvysZl35v8Q=
+    frozen: false
+
+submoduled-repo-2: (git release tag)
+    repository: http://localhost/submoduled-repo.git
+    pre_releases: false
+    submodules: false
+    version: v0.5
+    revision: b5b7ede21d2d58a9c20f8519e1fcf77e9f6d23c0
+    hash: sha256-UICNsyItO4n0PciJVK1EBd74PX8VwQZZD5cgSZ1s5CM=
+    frozen: false
+
+tagged-repo: (git release tag)
+    repository: http://localhost/tagged-repo.git
+    pre_releases: false
+    submodules: false
+    version: v0.2
+    revision: 55af235fa333dbcceb6f9f8501e70123fdd5f316
+    hash: sha256-zvEbA7dwNhxxbJFSwfRFBSgsLJd5Jrq6gAqm+0+Qhn8=
+    frozen: false
+
+test-tarball: (url)
+    url: http://localhost/testTarball
+    unpack: true
+    hash: sha256-lRKytOtDgTaHQOmUJWGDiYA9KmcsEdQRD/EhOJECDn4=
+    frozen: false
+
+test-tarball-mutable: (mutable url)
+    update_url: http://localhost/latest
+    unpack: true
+    url: http://localhost/testTarball
+    hash: sha256-lRKytOtDgTaHQOmUJWGDiYA9KmcsEdQRD/EhOJECDn4=
+    frozen: false
+
+test-url: (url)
+    url: http://localhost/testTarball
+    unpack: false
+    hash: sha256-tarballAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+    frozen: false
+
+test-url-mutable: (mutable url)
+    update_url: http://localhost/latest
+    unpack: false
+    url: http://localhost/testTarball
+    hash: sha256-tarballAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+    frozen: false
+
+untagged-repo: (git repository)
+    repository: http://localhost/untagged-repo.git
+    branch: foo
+    submodules: false
+    revision: 81289a3c12d4f528d27794b9e47f4ff5cf534a88
+    hash: sha256-JHHZ7D/jihTqoI05i5WpAgXCrxnO6q8MF8sfxKx6ARs=
+    frozen: false
+

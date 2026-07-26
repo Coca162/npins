@@ -1,0 +1,2 @@
+$ npins add git --forge=github http://localhost/tagged-repo.git
+Error: Could not parse the URL as GitHub repository

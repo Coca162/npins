@@ -1,0 +1,20 @@
+$ npins add git --forge=forgejo https://github.com/owner/dependency.git
+[INFO ] Adding 'dependency' …
+Error: Failed to fully initialize the pin
+
+Caused by:
+    0: Fetching dependency
+    1: HTTP status client error (404 Not Found) for url (https://github.com/api/v1/repos/owner/dependency/archive/v0.2.tar.gz)
+    2: failed to prefetch url: https://github.com/api/v1/repos/owner/dependency/archive/v0.2.tar.gz
+       error: unable to download 'https://github.com/api/v1/repos/owner/dependency/archive/v0.2.tar.gz': HTTP error 404 ()
+       
+              response body:
+       
+              <html>
+              <head><title>404 Not Found</title></head>
+              <body>
+              <center><h1>404 Not Found</h1></center>
+              <hr><center>nginx</center>
+              </body>
+              </html>
+       
