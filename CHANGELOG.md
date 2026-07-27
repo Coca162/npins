@@ -4,6 +4,7 @@
 
 - Added `import-lon` to import lockfiles from Lon
 - `import-niv` now supports file/tarball pins.
+- `import-flake` now supports file pins.
 
 ## 0.5.0
 

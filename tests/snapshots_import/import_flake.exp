@@ -2,9 +2,6 @@ $ npins import-flake flake/flake.lock
 [INFO ] Note that all the imported entries will be updated so they won't necessarily point to the same commits as before!
 [INFO ] Importing dependency
 [INFO ] Importing not-tarball
-[ERROR] Failed to import pin 'not-tarball'
-[ERROR] Pin is either invalid, or we don't support it
-[ERROR] 	unknown variant `file`, expected one of `gitlab`, `github`, `git`, `path`, `tarball`
 [INFO ] Importing tagged-repo
 [INFO ] Importing tarball
 [INFO ] Done.

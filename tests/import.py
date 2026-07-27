@@ -90,7 +90,7 @@ with npins_subtest("import flake"):
     tagged_head = ls_remote("http://localhost/tagged-repo.git", "refs/heads/test-branch")
 
     pins = dump_pins()
-    assert set(pins.keys()) == {"tagged-repo", "dependency", "tarball"}, pins.keys()
+    assert set(pins.keys()) == {"tagged-repo", "dependency", "tarball", "not-tarball"}, pins.keys()
     tagged = pins["tagged-repo"]
     assert tagged["type"] == "Git", tagged
     assert tagged["repository"] == {"type": "Git", "url": "http://localhost/tagged-repo.git"}
@@ -103,10 +103,14 @@ with npins_subtest("import flake"):
     assert dependency["branch"] == "test-branch"
     assert dependency["revision"] == dependency_head
     assert dependency["url"] == f"https://github.com/owner/dependency/archive/{dependency_head}.tar.gz"
-    # tarball = pins["tarball"]
-    # assert tarball["type"] == "Url", tarball
-    # assert tarball["unpack"] is True
-    # assert tarball["url"] == "http://localhost/testTarball"
+    tarball = pins["tarball"]
+    assert tarball["type"] == "Url", tarball
+    assert tarball["unpack"] is True
+    assert tarball["url"] == "http://localhost/testTarball"
+    not_tarball = pins["not-tarball"]
+    assert not_tarball["type"] == "Url", not_tarball
+    assert not_tarball["unpack"] is False
+    assert not_tarball["url"] == "http://localhost/testTarball"
 
     # Import only a single entry into a second lockfile
     succeed("npins --lock-file sources2.json init --bare")
