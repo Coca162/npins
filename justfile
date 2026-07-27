@@ -5,7 +5,7 @@
 
 # Run cargo unit tests
 test *OPTIONS:
-    cargo test --workspace
+    cargo test --workspace {{OPTIONS}}
 
 # Run nix integration tests and check their outputs against the recorded snapshots
 # Use e.g. `just nix-test pinTypes` to run only that test

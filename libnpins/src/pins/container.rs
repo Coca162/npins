@@ -2,7 +2,10 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{Updatable, diff, nix::nix_prefetch_docker};
+use crate::{
+    Updatable, diff,
+    nix::{container_image_digest, nix_prefetch_docker},
+};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub struct Pin {
@@ -56,9 +59,12 @@ impl Updatable for Pin {
 
     async fn update(&self, _old: Option<&ContainerVersion>) -> anyhow::Result<ContainerVersion> {
         Ok(ContainerVersion {
-            image_digest: nix_prefetch_docker(&self.image_name, &self.image_tag, &self.arch, None)
-                .await?
-                .image_digest,
+            image_digest: container_image_digest(
+                &self.image_name,
+                &self.image_tag,
+                self.arch.as_deref(),
+            )
+            .await?,
         })
     }
 

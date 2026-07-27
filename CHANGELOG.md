@@ -5,6 +5,7 @@
 - Added `import-lon` to import lockfiles from Lon
 - `import-niv` now supports file/tarball pins.
 - `import-flake` now supports file pins.
+- Updating container pins no longer downloads the image twice (https://github.com/andir/npins/pull/243, TODO)
 
 ## 0.5.0
 

@@ -11,6 +11,7 @@
   # runtime dependencies
   nix-prefetch-git,
   nix-prefetch-docker,
+  skopeo, # part of nix-prefetch-docker but we call it explicitly too
   git, # for git ls-remote
 }:
 let
@@ -53,6 +54,7 @@ let
   runtimePath = lib.makeBinPath [
     nix-prefetch-git
     nix-prefetch-docker
+    skopeo
     git
   ];
   self = rustPlatform.buildRustPackage {
