@@ -922,6 +922,81 @@ impl Opts {
         Ok(())
     }
 
+    async fn import_lon(&self, o: &ImportLonOpts) -> Result<()> {
+        let mut pins = self.read_pins()?;
+
+        let lon: BTreeMap<String, serde_json::Value> =
+            serde_json::from_reader(File::open(&o.path).context(anyhow::format_err!(
+                "Could not open lon.lock at '{}'",
+                o.path.canonicalize().unwrap_or_else(|_| o.path.clone()).display()
+            ))?)
+            .context("Lon file is not a valid JSON dict")?;
+        /* Finally a well-versioned format! (though unclear to me why the version is a string …) */
+        let version = lon
+            .get("version")
+            .context("Lockfile must contain a 'version' key")?;
+        anyhow::ensure!(
+            version.as_str() == Some("1"),
+            "Only lon lockfile version \"1\" is supported; found {}",
+            version,
+        );
+        let sources: BTreeMap<String, serde_json::Value> = serde_json::from_value(
+            lon.get("sources")
+                .context("Lockfile must contain a 'sources' key")?
+                .clone(),
+        )
+        .context("'sources' key is not a valid JSON dict")?;
+
+        pub async fn import(
+            name: &str,
+            pin: Option<&serde_json::Value>,
+            npins: &mut NixPins,
+            sources: &BTreeMap<String, serde_json::Value>,
+        ) -> anyhow::Result<()> {
+            let pin = pin
+                .or_else(|| sources.get(name))
+                .with_context(|| anyhow::format_err!("Pin '{name}' not found in lon.lock"))?;
+            anyhow::ensure!(
+                !npins.pins.contains_key(name),
+                "Pin '{}' exists in both files, this is a collision. Please delete the entry in one of the files.",
+                name
+            );
+
+            let pin: import::LonPin = serde_json::from_value(pin.clone())
+                .context("Pin is either invalid, or we don't support it")?;
+            let mut pin: Pin = pin
+                .try_into()
+                .context("Could not convert pin to npins format")?;
+            let diff = pin.fetch().await.context("Failed to update the pin")?;
+            if !diff.is_empty() {
+                log::warn!("Imported pin was modified by the import!");
+                write_diff(&mut std::io::stderr(), name, &diff);
+            }
+            npins.pins.insert(name.to_string(), pin);
+
+            Ok(())
+        }
+
+        if let Some(name) = &o.name {
+            import(name, None, &mut pins, &sources).await?;
+        } else {
+            for (name, pin) in sources.iter() {
+                log::info!("Importing {}", name);
+                if let Err(err) = import(name, Some(pin), &mut pins, &sources).await {
+                    log::error!("Failed to import pin '{}'", name);
+                    log::error!("{}", err);
+                    err.chain()
+                        .skip(1)
+                        .for_each(|cause| log::error!("\t{}", cause));
+                }
+            }
+        }
+
+        self.write_pins(&pins)?;
+        log::info!("Done.");
+        Ok(())
+    }
+
     async fn get_path(&self, o: &GetPathOpts) -> Result<()> {
         /* Although redundant, we still parse the lock file here for better error messages */
         {
@@ -964,6 +1039,7 @@ impl Opts {
             Command::Remove(r) => self.remove(r)?,
             Command::ImportNiv(o) => start_runtime(self.import_niv(o))?,
             Command::ImportFlake(o) => start_runtime(self.import_flake(o))?,
+            Command::ImportLon(o) => start_runtime(self.import_lon(o))?,
             Command::Freeze(o) => start_runtime(self.freeze(o))?,
             Command::Unfreeze(o) => start_runtime(self.unfreeze(o))?,
             Command::GetPath(o) => start_runtime(self.get_path(o))?,

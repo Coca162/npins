@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added `import-lon` to import lockfiles from Lon
+
 ## 0.5.0
 
 - **[Breaking] Support for the "Lockable HTTP Tarball Protocol" has been removed.**

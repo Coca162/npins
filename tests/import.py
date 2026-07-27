@@ -95,3 +95,89 @@ with npins_subtest("import flake"):
     succeed("npins --lock-file sources2.json import-flake --name dependency flake/flake.lock")
     assert set(dump_pins("sources2.json").keys()) == {"dependency"}
     fail("npins import-flake --name dependency flake/flake.lock")
+
+with npins_subtest("import lon"):
+    succeed("lon init")
+    succeed("lon add github owner/dependency test-branch")
+    succeed("lon add git tagged-repo http://localhost/tagged-repo.git test-branch")
+    succeed("lon add git submoduled-repo http://localhost/submoduled-repo.git main --submodules")
+    succeed("lon add git frozen-repo http://localhost/untagged-repo.git foo --frozen")
+    # Lon has no CLI command for adding tarball sources (they only come from importing from other tools)
+    # I assume they'll get around to fully supporting tarball pins eventually, so in the meantime
+    # fake some entries to test it (the proper way would be `lon init --from npins`, but I'd feel silly doing that)
+    lock = json.loads(succeed("cat lon.lock"))
+    lock["sources"]["tarball"] = {
+        "type": "Tarball",
+        "fetchType": "tarball",
+        "url": "http://localhost/testTarball",
+        "hash": FAKE_HASH,
+    }
+    lock["sources"]["mutable-tarball"] = {
+        "type": "Tarball",
+        "fetchType": "tarball",
+        "origin": "http://localhost/latest",
+        "url": "http://localhost/testTarball",
+        "hash": FAKE_HASH,
+    }
+    write_json("lon.lock", lock)
+
+    succeed("npins init --bare")
+    succeed_snapshot("npins import-lon", "import_lon")
+
+    dependency_head = ls_remote("https://github.com/owner/dependency.git", "refs/heads/test-branch")
+    tagged_head = ls_remote("http://localhost/tagged-repo.git", "refs/heads/test-branch")
+    submoduled_head = ls_remote("http://localhost/submoduled-repo.git", "refs/heads/main")
+    untagged_head = ls_remote("http://localhost/untagged-repo.git", "refs/heads/foo")
+
+    pins = dump_pins()
+    assert set(pins.keys()) == {
+        "dependency",
+        "tagged-repo",
+        "submoduled-repo",
+        "frozen-repo",
+        "tarball",
+        "mutable-tarball",
+    }, pins.keys()
+    dependency = pins["dependency"]
+    assert dependency["type"] == "Git", dependency
+    assert dependency["repository"] == {"type": "GitHub", "owner": "owner", "repo": "dependency"}
+    assert dependency["branch"] == "test-branch"
+    assert dependency["revision"] == dependency_head
+    assert dependency["url"] == f"https://github.com/owner/dependency/archive/{dependency_head}.tar.gz"
+    tagged = pins["tagged-repo"]
+    assert tagged["type"] == "Git", tagged
+    assert tagged["repository"] == {"type": "Git", "url": "http://localhost/tagged-repo.git"}
+    assert tagged["branch"] == "test-branch"
+    assert tagged["revision"] == tagged_head
+    assert tagged["url"] is None
+    assert "frozen" not in tagged
+    submoduled = pins["submoduled-repo"]
+    assert submoduled["type"] == "Git", submoduled
+    assert submoduled["submodules"] is True
+    assert submoduled["revision"] == submoduled_head
+    frozen = pins["frozen-repo"]
+    assert frozen["type"] == "Git", frozen
+    assert frozen["frozen"] is True
+    assert frozen["revision"] == untagged_head
+    tarball = pins["tarball"]
+    assert tarball["type"] == "Url", tarball
+    assert tarball["unpack"] is True
+    assert tarball["url"] == "http://localhost/testTarball"
+    assert tarball["hash"] != FAKE_HASH  # The hash was re-fetched on import
+    mutable_tarball = pins["mutable-tarball"]
+    assert mutable_tarball["type"] == "MutableUrl", mutable_tarball
+    assert mutable_tarball["unpack"] is True
+    assert mutable_tarball["update_url"] == "http://localhost/latest"
+    assert mutable_tarball["url"] == "http://localhost/testTarball"
+
+    # Import only a single entry into a second lockfile
+    succeed("npins --lock-file sources2.json init --bare")
+    succeed("npins --lock-file sources2.json import-lon --name tagged-repo")
+    assert set(dump_pins("sources2.json").keys()) == {"tagged-repo"}
+    fail("npins import-lon --name tagged-repo")
+    fail("npins import-lon --name does-not-exist")
+
+    # Make sure our version check actually works 🙃
+    lock["version"] = "2"
+    write_json("lon2.lock", lock)
+    fail_snapshot("npins import-lon lon2.lock", "import_lon_bad_version")

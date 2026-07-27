@@ -1,0 +1,16 @@
+$ npins import-lon
+[INFO ] Importing dependency
+[INFO ] Importing frozen-repo
+[INFO ] Importing mutable-tarball
+[WARN ] Imported pin was modified by the import!
+[mutable-tarball] Changes:
+-    hash: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
++    hash: sha256-lRKytOtDgTaHQOmUJWGDiYA9KmcsEdQRD/EhOJECDn4=
+[INFO ] Importing submoduled-repo
+[INFO ] Importing tagged-repo
+[INFO ] Importing tarball
+[WARN ] Imported pin was modified by the import!
+[tarball] Changes:
+-    hash: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
++    hash: sha256-lRKytOtDgTaHQOmUJWGDiYA9KmcsEdQRD/EhOJECDn4=
+[INFO ] Done.

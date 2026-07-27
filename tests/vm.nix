@@ -314,6 +314,7 @@ in
         pkgs.nix-prefetch-git
         pkgs.curl
         pkgs.niv
+        pkgs.lon
       ];
       nix.package = pkgs.lix;
       nix.nixPath = [ "nixpkgs=${pkgs.path}" ]; # for testing pin eval with pkgs

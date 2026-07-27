@@ -323,6 +323,15 @@ pub struct ImportFlakeOpts {
 }
 
 #[derive(Debug, Parser)]
+pub struct ImportLonOpts {
+    #[arg(default_value = "lon.lock", value_hint = ValueHint::FilePath)]
+    pub path: PathBuf,
+    /// Optionally import only one entry from Lon instead of all
+    #[arg(short, long, value_hint = ValueHint::Other)]
+    pub name: Option<String>,
+}
+
+#[derive(Debug, Parser)]
 pub struct FreezeOpts {
     /// Names of the pin(s)
     #[arg(required = true, value_hint = ValueHint::Other)]
@@ -367,6 +376,9 @@ pub enum Command {
 
     /// Try to import entries from flake.lock
     ImportFlake(ImportFlakeOpts),
+
+    /// Try to import entries from lon.lock
+    ImportLon(ImportLonOpts),
 
     /// Freezes a pin entry, preventing it from being changed during an update
     Freeze(FreezeOpts),
