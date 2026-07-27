@@ -5,7 +5,11 @@
 with npins_subtest("import niv"):
     succeed("niv init --nixpkgs owner/dependency -b test-branch")
     succeed("niv add git --repo http://localhost/tagged-repo.git -b test-branch -n tagged-repo")
-    succeed("niv add tarball-pin -t http://localhost/testTarball")
+    # Niv infers the type from the URL's file ending, defaulting to "file"
+    succeed("niv add file-pin -t http://localhost/testTarball")
+    succeed("niv add tarball-pin -T tarball -t http://localhost/testTarball")
+    # Placeholders in the URL template mean that the URL is versioned, so the pin gets imported as immutable
+    succeed("niv add versioned-pin -T tarball -s version=testTarball -t 'http://localhost/<version>'")
 
     succeed("npins init --bare")
     succeed_snapshot("npins import-niv", "import_niv")
@@ -14,8 +18,7 @@ with npins_subtest("import niv"):
     repo_head = ls_remote("http://localhost/tagged-repo.git", "refs/heads/test-branch")
 
     pins = dump_pins()
-    # FIXME WTF? `npins import-niv` currently just skips over tarball pins?!
-    assert set(pins.keys()) == {"nixpkgs", "tagged-repo"}, pins.keys()
+    assert set(pins.keys()) == {"nixpkgs", "tagged-repo", "file-pin", "tarball-pin", "versioned-pin"}, pins.keys()
     nixpkgs = pins["nixpkgs"]
     assert nixpkgs["type"] == "Git", nixpkgs
     assert nixpkgs["repository"] == {"type": "GitHub", "owner": "owner", "repo": "dependency"}
@@ -28,6 +31,21 @@ with npins_subtest("import niv"):
     assert repo["branch"] == "test-branch"
     assert repo["revision"] == repo_head
     assert repo["url"] is None
+    file_pin = pins["file-pin"]
+    assert file_pin["type"] == "Url", file_pin
+    assert file_pin["unpack"] is False
+    assert file_pin.get("update_url") is None
+    assert file_pin["url"] == "http://localhost/testTarball"
+    tarball = pins["tarball-pin"]
+    assert tarball["type"] == "Url", tarball
+    assert tarball["unpack"] is True
+    assert tarball.get("update_url") is None
+    assert tarball["url"] == "http://localhost/testTarball"
+    versioned = pins["versioned-pin"]
+    assert versioned["type"] == "Url", versioned
+    assert versioned["unpack"] is True
+    assert versioned["url"] == "http://localhost/testTarball"
+    assert versioned["hash"]
 
     # Import only a single entry into a second lockfile
     succeed("npins --lock-file sources2.json init --bare")

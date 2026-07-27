@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Added `import-lon` to import lockfiles from Lon
+- `import-niv` now supports file/tarball pins.
 
 ## 0.5.0
 
