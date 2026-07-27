@@ -186,8 +186,11 @@ impl Repository {
         for (forge_type, path, func) in distinct_api_endpoints {
             let probe = |mut test_url: Url| async {
                 test_url.set_path(path);
-                log::debug!("Probing {test_url} to check for {forge_type}");
-                let _: serde_json::Value = get_and_deserialize(test_url).await?;
+                log::debug!("Probing {test_url} to check for {forge_type} …");
+                let _: serde_json::Value = get_and_deserialize(test_url)
+                    .await
+                    .inspect_err(|e| log::debug!("… probe failed with {e:?}"))?;
+                log::debug!("… probe successful");
                 Ok::<(), anyhow::Error>(())
             };
 
