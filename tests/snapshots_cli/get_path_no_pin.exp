@@ -1,0 +1,2 @@
+$ npins get-path foo
+Error: Pin 'foo' does not exist.

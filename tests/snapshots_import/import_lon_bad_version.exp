@@ -1,0 +1,2 @@
+$ npins import-lon lon2.lock
+Error: Only lon lockfile version "1" is supported; found "2"

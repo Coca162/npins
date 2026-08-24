@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added `import-lon` to import lockfiles from Lon
+- `import-niv` now supports file/tarball pins.
+- `import-flake` now supports file pins.
+- Updating container pins no longer downloads the image twice (https://github.com/andir/npins/pull/243, TODO)
+
 ## 0.5.0
 
 - **[Breaking] Support for the "Lockable HTTP Tarball Protocol" has been removed.**
@@ -33,6 +38,7 @@
 
 - Changed the hashes to use the SRI format (https://github.com/andir/npins/pull/139)
 - Added Nixpkgs support for fetching pins as proper derivations (https://github.com/andir/npins/pull/153)
+  - **[BREAKING] while this was intended to be a backwards-compatible feature, several unfixable regressions have been found since**
 - Added `npins get-path`, which is a convenience wrapper around `nix-instantiate --eval -E '(import ./npins).$pin.outPath'` and especially useful for scripting and in lockfile mode. (https://github.com/andir/npins/pull/153)
 - Added `npins verify`, which will check that all pins still properly work (https://github.com/andir/npins/pull/182)
 - Added `npins add container`, which allows pinning OCI containers (https://github.com/andir/npins/pull/145)

@@ -305,10 +305,10 @@ pub struct InitOpts {
 }
 
 #[derive(Debug, Parser)]
-pub struct ImportOpts {
+pub struct ImportNivOpts {
     #[arg(default_value = "nix/sources.json", value_hint = ValueHint::FilePath)]
     pub path: PathBuf,
-    /// Only import one entry from Niv
+    /// Optionally import only one entry from Niv instead of all
     #[arg(short, long, value_hint = ValueHint::Other)]
     pub name: Option<String>,
 }
@@ -317,7 +317,16 @@ pub struct ImportOpts {
 pub struct ImportFlakeOpts {
     #[arg(default_value = "flake.lock", value_hint = ValueHint::FilePath)]
     pub path: PathBuf,
-    /// Only import one entry from the flake
+    /// Optionally import only one entry from the flake instead of all
+    #[arg(short, long, value_hint = ValueHint::Other)]
+    pub name: Option<String>,
+}
+
+#[derive(Debug, Parser)]
+pub struct ImportLonOpts {
+    #[arg(default_value = "lon.lock", value_hint = ValueHint::FilePath)]
+    pub path: PathBuf,
+    /// Optionally import only one entry from Lon instead of all
     #[arg(short, long, value_hint = ValueHint::Other)]
     pub name: Option<String>,
 }
@@ -363,10 +372,13 @@ pub enum Command {
     Remove(RemoveOpts),
 
     /// Try to import entries from Niv
-    ImportNiv(ImportOpts),
+    ImportNiv(ImportNivOpts),
 
     /// Try to import entries from flake.lock
     ImportFlake(ImportFlakeOpts),
+
+    /// Try to import entries from lon.lock
+    ImportLon(ImportLonOpts),
 
     /// Freezes a pin entry, preventing it from being changed during an update
     Freeze(FreezeOpts),

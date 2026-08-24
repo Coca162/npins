@@ -188,6 +188,59 @@ pub async fn nix_prefetch_docker(
     serde_json::from_slice(&output.stdout)
         .context("Failed to deserialize nix-prefetch-git JSON response.")
 }
+
+/// Query the digest of a container image from its registry, without downloading the image.
+///
+/// This was extracted from `nix-prefetch-docker`, which calls skopeo internally as well
+/// https://github.com/NixOS/nixpkgs/blob/master/pkgs/build-support/docker/nix-prefetch-docker#L34-L41
+pub async fn container_image_digest(
+    image_name: impl AsRef<str>,
+    image_tag: impl AsRef<str>,
+    arch: Option<&str>,
+) -> Result<String> {
+    let image_name = image_name.as_ref();
+    let image_tag = image_tag.as_ref();
+
+    let mut command = tokio::process::Command::new("skopeo");
+    command.arg("--insecure-policy");
+    if let Some(arch) = arch {
+        command.arg("--override-arch").arg(arch);
+    }
+    command
+        .arg("inspect")
+        .arg("--format")
+        .arg("{{.Digest}}")
+        .arg(format!("docker://{image_name}:{image_tag}"));
+
+    log::debug!("Executing: {}", format_command(&command)?);
+
+    let output = command
+        .output()
+        .await
+        .with_context(|| format!("Failed to spawn skopeo inspect for {image_name}:{image_tag}"))?;
+
+    if !output.status.success() {
+        return Err(anyhow::anyhow!(format!(
+            "failed to inspect container image {}:{}\n{}",
+            image_name,
+            image_tag,
+            String::from_utf8_lossy(&output.stderr)
+        )));
+    }
+
+    let digest = std::str::from_utf8(&output.stdout)
+        .context("skopeo sent invalid utf8")?
+        .trim()
+        .to_owned();
+    anyhow::ensure!(
+        !digest.is_empty(),
+        "skopeo returned an empty digest for {}:{}",
+        image_name,
+        image_tag
+    );
+    Ok(digest)
+}
+
 pub async fn nix_eval_pin(lockfile_path: &Path, pin: &str) -> Result<std::path::PathBuf> {
     let lockfile_path = lockfile_path.canonicalize()?;
     let lockfile_path = lockfile_path

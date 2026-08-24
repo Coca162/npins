@@ -42,6 +42,7 @@ pkgs.mkShell {
       lix
       nix-prefetch-git
       nix-prefetch-docker
+      skopeo
       git
       just
       npins

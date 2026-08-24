@@ -1,0 +1,4 @@
+$ npins init --bare
+[INFO ] Welcome to npins!
+[INFO ] Writing default.nix
+[INFO ] The file 'npins/sources.json' already exists; nothing to do.

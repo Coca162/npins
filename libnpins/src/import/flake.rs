@@ -26,6 +26,7 @@ enum FlakeType {
     Git,
     Path,
     Tarball,
+    File,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -132,6 +133,13 @@ impl FlakePin {
                     .url
                     .context("missing url on a tarball flake input")?;
                 urlpin::UrlPin { url, unpack: true }.into()
+            },
+            File => {
+                let url = self
+                    .original
+                    .url
+                    .context("missing url on a file flake input")?;
+                urlpin::UrlPin { url, unpack: false }.into()
             },
             Path => anyhow::bail!("Path inputs are currently not supported by npins."),
         })
