@@ -9,7 +9,7 @@ let
   pre-commit = (import pins."pre-commit-hooks.nix").run {
     src = ./.;
     hooks = {
-      nixfmt-rfc-style = {
+      nixfmt = {
         enable = true;
         settings.width = 100;
       };
