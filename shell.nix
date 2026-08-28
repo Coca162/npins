@@ -47,7 +47,7 @@ pkgs.mkShell {
       just
       npins
     ]
-    ++ (lib.optionals stdenv.isDarwin [
+    ++ (lib.optionals stdenv.hostPlatform.isDarwin [
       pkgs.libiconv
     ]);
 
