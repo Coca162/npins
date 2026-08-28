@@ -120,7 +120,7 @@ pub async fn nix_prefetch_git(
             .context("Failed to deserialize nix-prefetch-git JSON response.")?;
 
         NixHash::from_str(&info.sha256, Some(HashAlgo::Sha256))
-            .with_context(|| format!("failed to parse {} as NixHash", &info.sha256))
+            .with_context(|| format!("failed to parse {} as NixHash", info.sha256))
     };
     check_git_url(result.await, url).await
 }
